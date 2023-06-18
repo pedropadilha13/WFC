@@ -18,8 +18,6 @@ let tiles = [];
 let board;
 
 function setup() {
-  console.log(tileImages)
-
   tiles[0] = new Tile(tileImages[0], ['AAA', 'AAA', 'AAA', 'AAA']);
   tiles[1] = new Tile(tileImages[1], ['BBB', 'BBB', 'BBB', 'BBB']);
   tiles[2] = new Tile(tileImages[2], ['BBB', 'BCB', 'BBB', 'BBB']);
@@ -35,53 +33,57 @@ function setup() {
   tiles[12] = new Tile(tileImages[12], ['BBB', 'BCB', 'BBB', 'BCB']);
 
   for (let i = 2; i < 13; i++) {
-    // console.log(tiles[i]);
     for (let j = 1; j < 4; j++) {
       const rotated = tiles[i].rotate(j);
       tiles.push(rotated);
-      // console.log(rotated);
     }
   }
 
-  // console.log(tiles);
-
   createCanvas(W, H);
   background('gray');
-  // image(tiles[0].img, 0, 0, w, h);
+
+  randomSeed(50);
   
   board = new Board(dim);
-  // board.board[2].collapsed = true;
-  // board.board[2].possibilities = [8];
-  // board.board[2].tile = 8;
 }
 
 
 function draw () {
-
-  console.log(board.board);
   const nextCollapse = board.getNextCollapse();
-  console.log(nextCollapse);
+  console.log('nextCollapse', nextCollapse);
 
-  nextCollapse.collapsed = true;
+  if (!nextCollapse) {
+    return noLoop();
+  }
   
-  const picked = nextCollapse.possibilities[random]
+  const picked = nextCollapse.possibilities[floor(random(0, nextCollapse.possibilities.length))];
+  nextCollapse.tile = picked;
+  nextCollapse.possibilities = [picked];
+  nextCollapse.collapsed = true;
   
   for (let i = 0; i < dim; i++) {
     for (let j = 0; j < dim; j++) {
       const piece = board.get(i, j);
-      // console.log(i, j, piece);
+      // console.log(piece);
       if (piece.collapsed) {
-        const tile = tiles[piece.tile];
-        const rotated = tile.rotate(5);
-        image(rotated.img, i * w, j * h, w, h);
+        console.log({piece});
+        image(tiles[piece.tile].img, i * w, j * h, w, h);
       } else {
         fill(0);
         stroke(255);
         rect(i * w, j * h, w, h);
+
+
       }
     }
   }
+
+  board.evalPossibleConnections();
   
   noLoop();
-  frameRate(10);
+  frameRate(1);
+}
+
+function mouseClicked() {
+  redraw();
 }

@@ -24,4 +24,6 @@ class Tile {
 
     return new Tile(newImg, newConnectors);
   }
+
+  // analyze() {}
 }
