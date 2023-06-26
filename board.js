@@ -1,12 +1,19 @@
+const DIRECTIONS = {
+  up: 0,
+  right: 1,
+  down: 2,
+  left: 3
+};
+
 class Board {
   constructor(dim) {
     this.dim = dim;
     const initialPossibilities = new Array(tiles.length).fill().map((_, i) => i);
 
-    this.board = new Array(dim * dim).fill().map(() => ({
+    this.board = new Array(dim * dim).fill().map((_, i) => ({
+      index: i,
       collapsed: false,
-      possibilities: initialPossibilities,
-      tile: -1
+      possibilities: initialPossibilities
     }));
   }
 
@@ -31,93 +38,63 @@ class Board {
     return nextCollapsable;
   }
 
-  evalPossibleConnections() {
-    console.log('BEPC');
-    for (let i = 0; i < this.dim; i++) {
-      for (let j = 0; j < this.dim; j++) {
+  evalPossibleConnections(index) {
+    for (let j = 0; j < this.dim; j++) {
+      for (let i = 0; i < this.dim; i++) {
         const piece = this.get(i, j);
-        console.log(piece, piece.collapsed);
+
         if (!piece.collapsed) {
-          // analyze above
           if (j > 0) {
-            const up = this.board[i + (j - 1) * dim];
-            for (const possibility of up.possibilities) {
-              for (const piecePossibility of piece.possibilities) {
-                if (
-                  tiles[piecePossibility].connectors[0] !==
-                  tiles[possibility].connectors[0].split('').reverse().join('')
-                ) {
-                  piece.possibilities = piece.possibilities.filter(pp => pp !== piecePossibility);
-                } else {
-                  console.log('pode', tiles[piecePossibility].connectors[0],
-                  tiles[possibility].connectors[0].split('').reverse().join(''));
-                }
-              }
-            }
+            this.analyzeDirection(i, j - 1, piece, 'up');
           }
-          console.log(1, piece.possibilities);
 
-          // analyze right
           if (i < dim - 1) {
-            const right = this.board[i + 1 + j * dim];
-            for (const possibility of right.possibilities) {
-              for (const piecePossibility of piece.possibilities) {
-                if (
-                  tiles[piecePossibility].connectors[1] !==
-                  tiles[possibility].connectors[1].split('').reverse().join('')
-                ) {
-                  piece.possibilities = piece.possibilities.filter(pp => pp !== piecePossibility);
-                } else {
-                  console.log('pode', tiles[piecePossibility].connectors[1],
-                  tiles[possibility].connectors[1].split('').reverse().join(''));
-                }
-              }
-            }
+            this.analyzeDirection(i + 1, j, piece, 'right');
           }
-          console.log(2, piece.possibilities);
 
-          // analyze below
           if (j < dim - 1) {
-            const down = this.board[i + (j + 1) * dim];
-            for (const possibility of down.possibilities) {
-              for (const piecePossibility of piece.possibilities) {
-                if (
-                  tiles[piecePossibility].connectors[2] !==
-                  tiles[possibility].connectors[2].split('').reverse().join('')
-                ) {
-                  piece.possibilities = piece.possibilities.filter(pp => pp !== piecePossibility);
-                } else {
-                  console.log('pode', tiles[piecePossibility].connectors[2],
-                  tiles[possibility].connectors[2].split('').reverse().join(''));
-                }
-              }
-            }
+            this.analyzeDirection(i, j + 1, piece, 'down');
           }
-          console.log(3, piece.possibilities);
 
-          // analyze left
           if (i > 0) {
-            const left = this.board[i - 1 + j * dim];
-            for (const possibility of left.possibilities) {
-              for (const piecePossibility of piece.possibilities) {
-                if (
-                  tiles[piecePossibility].connectors[3] !==
-                  tiles[possibility].connectors[3].split('').reverse().join('')
-                ) {
-                  piece.possibilities = piece.possibilities.filter(pp => pp !== piecePossibility);
-                } else {
-                  console.log('pode', tiles[piecePossibility].connectors[3],
-                  tiles[possibility].connectors[3].split('').reverse().join(''));
-                }
-              }
-            }
+            this.analyzeDirection(i - 1, j, piece, 'left');
           }
-          console.log(4, piece.possibilities);
         }
       }
     }
+  }
 
-    // this.board = nextBoard;
-    console.log('EEPC');
+  analyzeDirection(i, j, piece, DIR) {
+    const target = this.board[i + j * dim];
+
+    // console.log(`--------------------- has ${DIR}`, target);
+    // console.log(`${DIR} possibilities`, target.possibilities);
+
+    const piecePossibilities = piece.possibilities.map(pp => ({
+      index: pp,
+      value: tiles[pp].connectors[DIRECTIONS[DIR]]
+    }));
+
+    let validPossibilities = [];
+    for (const possibility of target.possibilities) {
+      let valid = tiles[possibility].connectors[(DIRECTIONS[DIR] + 2) % 4];
+      validPossibilities = validPossibilities.concat(valid);
+    }
+
+    // console.log({ validPossibilities, 'raw possibilities': piece.possibilities });
+    piece.possibilities = this.checkValid(piecePossibilities, validPossibilities);
+    // console.log('filtered possibilities', piece.possibilities);
+  }
+
+  checkValid(possibilities, validPossibilities) {
+    return possibilities
+      .filter(p => validPossibilities.includes(p.value.split('').reverse().join('')))
+      .map(p => p.index);
+    // for (let i = possibilities.length - 1; i >= 0; i--) {
+    //   let element = possibilities[i];
+    //   if (!validPossibilities.includes(element)) {
+    //     possibilities.splice(i, 1);
+    //   }
+    // }
   }
 }

@@ -19,11 +19,9 @@ class Tile {
     const l = this.connectors.length;
 
     for (let i = 0; i < l; i++) {
-      newConnectors[i] = this.connectors[(i + n) % 4]
+      newConnectors[(i + n) % 4] = this.connectors[i];
     }
 
     return new Tile(newImg, newConnectors);
   }
-
-  // analyze() {}
 }
